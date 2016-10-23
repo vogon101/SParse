@@ -1,5 +1,6 @@
 package com.vogonjeltz.sparse.test
 
+import com.vogonjeltz.sparse.lib.ParsingLogger
 import com.vogonjeltz.sparse.lib.token._
 
 /**
@@ -8,19 +9,21 @@ import com.vogonjeltz.sparse.lib.token._
 object TestApp {
 
   def main(args: Array[String]) {
-    val a = new TestTokenizer()
+    val a = new TestTokenizer(new ParsingLogger(4))
     println()
-    val tokens = a.tokenize("(name)")
+    val tokens = a.tokenize("MY STRING MY OTHER STRING THESE ARE MY WORDS")
     println();println()
     println(tokens)
   }
 
 }
 
-class TestTokenizer extends BaseTokenizer{
+class TestTokenizer(parsingLogger: ParsingLogger) extends Tokenizer(parsingLogger){
 
-  val TESTTOKEN = "TEST" ~ "name"
+  val myString = "myString" ~ "MY"
 
-  println(tokenDefs)
+  val myOtherString = "myOtherString" ~ "MY OTHER"
+
+  val regex = "regex" $ "[A-Z]+"
 
 }

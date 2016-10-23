@@ -9,7 +9,7 @@ class BaseTokenizer extends Tokenizer {
   val RBRACK  = "RBRACK" ~  ")"
   val EQ      = "EQ"     ~  "="
   val EQEQ    = "EQEQ"   ~  "=="
-  val NAME    = "NAME"   ? "([a-zA-Z_\\+\\-\\*^%#~@\\?\\/]+[a-zA-Z0-9_\\+\\-\\*^%#~@\\?\\/]*)"
+  val NAME    = "NAME"   $ "([a-zA-Z_\\+\\-\\*^%#~@\\?\\/]+[a-zA-Z0-9_\\+\\-\\*^%#~@\\?\\/]*)"
   val DOT     = "DOT"    ~  "."
 
 }

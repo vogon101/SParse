@@ -1,5 +1,6 @@
 package com.vogonjeltz.sparse.lib.token
 
+import com.vogonjeltz.sparse.lib.ParsingLogger
 import com.vogonjeltz.sparse.lib.exception.TokenizerException
 
 import scala.collection.mutable.ListBuffer
@@ -7,7 +8,7 @@ import scala.collection.mutable.ListBuffer
 /**
   * Created by Freddie on 31/08/2016.
   */
-trait Tokenizer {
+abstract class Tokenizer (val Log: ParsingLogger = new ParsingLogger()){
 
   implicit val tokenizer: Tokenizer = this
 
@@ -17,9 +18,8 @@ trait Tokenizer {
   implicit class TokenName (n: String) {
     def ~ (p: String) = SimpleTokenDef(n)(p)
 
-    def ? (p: String) = RegexTokenDef(n)(p)
+    def $ (p: String) = RegexTokenDef(n)(p)
   }
-
   private var _tokenDefs: List[TokenDef] = List()
 
   def addTokenDef(tokenDef: TokenDef) =
@@ -27,49 +27,106 @@ trait Tokenizer {
 
   def tokenDefs:List[TokenDef] = _tokenDefs.reverse
 
-  def tokenize(source : String): List[Token] ={
+
+  //TODO: Convert to a more functional style
+  //TODO: Count lines
+  def tokenize(source : String): List[Token] = {
+
+    Log.n("Tokenising started")
+    Log.n(s"Tokens $tokenDefs")
 
     val tokens = ListBuffer[Token]()
 
-    //Stores the tokens that haven't yet been ruled out
-    var workingTokens = tokenDefs
+    var tokenBuilder = ""
 
-    //Stores the working token string
-    val tokenBuilder = new StringBuilder()
+    var workingTokenDefs = tokenDefs
 
-    //Loop through the string with an index
-    for ((c, i) <- source.zipWithIndex) {
+    var workingSource = source
 
+    def consume(c : Char) = {
+      Log.v(s"Consumed char $c")
+      workingSource = workingSource.substring(1)
       tokenBuilder += c
+    }
 
-      println(workingTokens)
-      println(c)
-      println(tokenBuilder)
-      println(tokens)
-      println()
 
-      //TODO: Deal with whitespace
-      //TODO: Read an actual book to figure out what I am doing here!
+    def reset() = {
+      tokenBuilder = ""
+      workingTokenDefs = tokenDefs
+    }
 
-      //Rule out tokens that could never match
-      workingTokens = workingTokens.filter(
-        _ checkMatch tokenBuilder.toString
+    def runChar(c : Char) = {
+      val newToken = tokenBuilder + c
+
+      val newTokenDefs = workingTokenDefs.filter(
+        _ checkMatch newToken
       )
 
-      //If there are no tokens left, throw an exception
-      if (workingTokens.isEmpty) {
-        throw new TokenizerException(s"No token found for character $c")
-      }
-      //If there is only one token left, check if that is a complete match
-      //If so, we can reset the loop and store the token
-      else if (workingTokens.length == 1) {
-        if (workingTokens.head.isFinishedMatch(tokenBuilder.toString())) {
-          tokens += new Token(tokenBuilder.toString(), workingTokens.head)
-          workingTokens = tokenDefs
-          tokenBuilder.clear()
-        }
-      }
+      Log.v(newTokenDefs.toString())
+      Log.v(c.toString)
 
+      if (newTokenDefs.isEmpty) {
+
+        if (workingTokenDefs.length == 1) {
+          tokens.append(
+            workingTokenDefs.head.fromText(tokenBuilder)
+          )
+          Log.n(s"Found token $tokenBuilder (newTokenDefs was empty)")
+          if (c.isWhitespace) consume(c)
+          reset()
+        }
+        else {
+
+          val simpleTokenDefs = workingTokenDefs.filter (
+            _ match {
+              case _: SimpleTokenDef => true
+              case _ => false
+            }
+          )
+
+          if (simpleTokenDefs.length == 1) {
+            tokens.append(simpleTokenDefs.head.fromText(tokenBuilder))
+            Log.n(s"Found token $tokenBuilder (chose simple tokendef over others)")
+            if (c.isWhitespace) consume(c)
+            reset()
+          } else {
+            Log.e("Ambiguous token for working string " + tokenBuilder)
+            throw new TokenizerException("Ambiguous token for working string " + tokenBuilder)
+          }
+
+
+        }
+
+      } else if (workingSource.length == 1) {
+        Log.n("End of source token search")
+
+        if (newTokenDefs.length == 1) {
+          tokens.append(
+            newTokenDefs.head.fromText(newToken)
+          )
+          Log.n(s"Found token $newToken")
+          consume(c)
+        }
+        else {
+          throw new TokenizerException("Ambiguous token for working string at end of file : " + tokenBuilder)
+        }
+
+      } else {
+        consume(c)
+        workingTokenDefs = newTokenDefs
+      }
+    }
+
+    while (workingSource.length > 0) {
+
+      val c = workingSource.head
+
+      if (tokenBuilder == "" && c.isWhitespace){
+        consume(c)
+        reset()
+      } else {
+        runChar(c)
+      }
 
 
     }
