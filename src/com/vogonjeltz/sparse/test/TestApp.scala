@@ -9,9 +9,9 @@ import com.vogonjeltz.sparse.lib.token._
 object TestApp {
 
   def main(args: Array[String]) {
-    val a = new TestTokenizer(new ParsingLogger(4))
+    val a = new SLangTokenizer(new ParsingLogger(4))
     println()
-    val tokens = a.tokenize("MY STRING MY OTHER STRING THESE ARE MY WORDS")
+    val tokens = a.tokenize("my.variable==my.other.variable")
     println();println()
     println(tokens)
   }
