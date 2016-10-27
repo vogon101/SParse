@@ -30,10 +30,10 @@ class MyTokenizer extends Tokenizer {
 
 object TestApp extends App {
 
-    //Returns List(Token(Token_1 -> `literal text` | 1))
+    //Returns List(Token(TOKEN_1 -> `literal text` | 1))
     (new MyTokenizer()).tokenize("literal text")
     
-    //Returns List(Token(Token_2 -> `Hello` | 1) Token(Token_2 -> `world` | 1))
+    //Returns List(Token(TOKEN_2 -> `Hello` | 1), Token(TOKEN_2 -> `world` | 1))
     (new MyTokenizer()).tokenize("Hello world")
 
 }
