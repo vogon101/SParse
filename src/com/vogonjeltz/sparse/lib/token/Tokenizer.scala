@@ -1,133 +1,133 @@
 package com.vogonjeltz.sparse.lib.token
 
-import com.vogonjeltz.sparse.lib.ParsingLogger
+import com.vogonjeltz.sparse.lib.{ParsingLogger, SParseUtils}
 import com.vogonjeltz.sparse.lib.exception.TokenizerException
 
 import scala.collection.mutable.ListBuffer
 
 /**
-  * Created by Freddie on 31/08/2016.
+  * A class that represents a grammar of tokens.
+  * @param Log - The logger object through which all output will be processed
   */
 abstract class Tokenizer (val Log: ParsingLogger = new ParsingLogger()){
 
-  implicit val tokenizer: Tokenizer = this
+  //Used for creating token definitions
+  implicit protected val tokenizer: Tokenizer = this
 
-  def T (n: String)(p:String) = SimpleTokenDef(n)(p)
-  def RT(n: String)(p:String) = RegexTokenDef(n)(p)
+  /**
+    * If true the tokenizer will parse newline characters as separate tokens
+    * This requires there to be a SimpleTokenDef with the pattern "\n"
+    */
+  val PARSE_NEWLINE_AS_TOKEN = false
 
   implicit class TokenName (n: String) {
     def ~ (p: String) = SimpleTokenDef(n)(p)
 
     def $ (p: String) = RegexTokenDef(n)(p)
   }
+
   private var _tokenDefs: List[TokenDef] = List()
 
+  /**
+    * Add a tokenDefinition to the internal list
+    * @param tokenDef - The tokenDef to add
+    */
   def addTokenDef(tokenDef: TokenDef) =
     _tokenDefs = tokenDef :: _tokenDefs
 
+  /**
+    * Returns the internal list of TokenDefs in order that they were added (reversed)
+    * Assumed
+    * @return
+    */
   def tokenDefs:List[TokenDef] = _tokenDefs.reverse
 
-
-  //TODO: Convert to a more functional style
-  //TODO: Count lines
-  def tokenize(source : String): List[Token] = {
-
-    Log.n("Tokenising started")
-    Log.n(s"Tokens $tokenDefs")
+  def tokenize(source: String): List[Token] ={
 
     val tokens = ListBuffer[Token]()
 
-    var tokenBuilder = ""
+    var workingTokenSource = ""
+
+
+    var lineCount = 1
+
+    //TODO: Check that this ugly hack works
+    //TODO: Remove this awful hack
+    var workingSource = source + " "
 
     var workingTokenDefs = tokenDefs
 
-    var workingSource = source
-
-    def consume(c : Char) = {
-      Log.v(s"Consumed char $c")
+    def consume (): Unit ={
       workingSource = workingSource.substring(1)
-      tokenBuilder += c
     }
 
-
-    def reset() = {
-      tokenBuilder = ""
+    def reset (): Unit ={
+      workingTokenSource = ""
       workingTokenDefs = tokenDefs
     }
 
-    def runChar(c : Char) = {
-      val newToken = tokenBuilder + c
-
-      val newTokenDefs = workingTokenDefs.filter(
-        _ checkMatch newToken
-      )
-
-      Log.v(newTokenDefs.toString())
-      Log.v(c.toString)
-
-      if (newTokenDefs.isEmpty) {
-
-        if (workingTokenDefs.length == 1) {
-          tokens.append(
-            workingTokenDefs.head.fromText(tokenBuilder)
-          )
-          Log.n(s"Found token $tokenBuilder (newTokenDefs was empty)")
-          if (c.isWhitespace) consume(c)
-          reset()
-        }
-        else {
-
-          val simpleTokenDefs = workingTokenDefs.filter (
-            _ match {
-              case _: SimpleTokenDef => true
-              case _ => false
-            }
-          )
-
-          if (simpleTokenDefs.length == 1) {
-            tokens.append(simpleTokenDefs.head.fromText(tokenBuilder))
-            Log.n(s"Found token $tokenBuilder (chose simple tokendef over others)")
-            if (c.isWhitespace) consume(c)
-            reset()
-          } else {
-            Log.e("Ambiguous token for working string " + tokenBuilder)
-            throw new TokenizerException("Ambiguous token for working string " + tokenBuilder)
-          }
-
-
-        }
-
-      } else if (workingSource.length == 1) {
-        Log.n("End of source token search")
-
-        if (newTokenDefs.length == 1) {
-          tokens.append(
-            newTokenDefs.head.fromText(newToken)
-          )
-          Log.n(s"Found token $newToken")
-          consume(c)
-        }
-        else {
-          throw new TokenizerException("Ambiguous token for working string at end of file : " + tokenBuilder)
-        }
-
-      } else {
-        consume(c)
-        workingTokenDefs = newTokenDefs
-      }
+    def addToken(tokenDef: TokenDef, source: String, line: Int): Unit = {
+      tokens.append(tokenDef.fromText(source, line))
+      reset()
     }
 
+    //TODO: Work out how to add newlines as a token
+    //TODO: Figure out how to not include the "\n" at the end of an InlineComment token
     while (workingSource.length > 0) {
 
       val c = workingSource.head
 
-      if (tokenBuilder == "" && c.isWhitespace){
-        consume(c)
-        reset()
-      } else {
-        runChar(c)
+      if(c == '\n') {
+        lineCount += 1
       }
 
+      if (c.isWhitespace && workingTokenSource == "" && (if (PARSE_NEWLINE_AS_TOKEN) c !='\n' else true)) {
+        Log.n("Consumed whitespace with empty token")
+        consume()
+      }
+      else {
+
+        val proposedTokenSource = workingTokenSource + c
+
+        val proposedTokenDefs = workingTokenDefs.filter(
+          _ couldMatch proposedTokenSource
+        )
+        Log.n(proposedTokenDefs.toString())
+
+        if (proposedTokenDefs.isEmpty || workingSource.length < 2){
+          Log.n("Empty PTD")
+          //Look back for token
+          Log.n(workingTokenDefs.toString())
+          Log.n(workingTokenSource)
+          if (workingTokenDefs.length == 1 && workingTokenDefs.head.matches(workingTokenSource)) {
+            addToken(workingTokenDefs.head, workingTokenSource, lineCount)
+          } else {
+            val fullMatches = workingTokenDefs.filter( _ matches workingTokenSource)
+
+            if (fullMatches.isEmpty) {
+              throw new TokenizerException(s"No tokens matched string ${SParseUtils.sanitiseString(workingSource)} and ${SParseUtils.sanitiseString(c.toString)} would have emptied list of tokendefs near line $lineCount")
+            } else if (fullMatches.length == 1) {
+              addToken(fullMatches.head, workingTokenSource, lineCount)
+            } else {
+              //TODO: Allow this method to be configured
+              val simpleTokenFullMatces = fullMatches.filter(_ match {
+                case _: SimpleTokenDef => true
+                case _ => false
+              })
+              if (simpleTokenFullMatces.length == 1) {
+                addToken(simpleTokenFullMatces.head, workingTokenSource, lineCount)
+              } else {
+                throw new TokenizerException(s"Ambiguous number of tokens matched ${SParseUtils.sanitiseString(workingSource)} and ${SParseUtils.sanitiseString(c.toString)} would have emptied list of tokendefs near line $lineCount")
+              }
+            }
+          }
+        } else{
+          workingTokenDefs = proposedTokenDefs
+          workingTokenSource = proposedTokenSource
+          consume()
+        }
+        Log.n(tokens.toList.toString())
+      }
 
     }
 

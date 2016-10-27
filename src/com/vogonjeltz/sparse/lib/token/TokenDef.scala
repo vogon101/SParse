@@ -14,11 +14,11 @@ abstract class TokenDef {
 
   tokenizer.addTokenDef(this)
 
-  def checkMatch(partial: String): Boolean
+  def couldMatch(partial: String): Boolean
 
-  def isFinishedMatch(partial: String) : Boolean
+  def matches(partial: String) : Boolean
 
-  def fromText (text: String): Token = new Token(text, this)
+  def fromText (text: String, lineNum: Int): Token = new Token(text, this, lineNum)
 
 }
 
@@ -26,13 +26,13 @@ abstract class TokenDef {
 case class SimpleTokenDef(name: String)(val pattern: String)(implicit val tokenizer: Tokenizer)
   extends TokenDef {
 
-  def checkMatch(partial:String) = {
+  def couldMatch(partial:String) = {
     //println(s"Simple token matching $pattern to partial $partial")
     if (partial.length > pattern.length) false
     else pattern.substring(0, partial.length) == partial
   }
 
-  def isFinishedMatch(partial: String) = partial == pattern
+  def matches(partial: String) = partial == pattern
 
 }
 
@@ -41,7 +41,7 @@ case class RegexTokenDef(name : String)(val pattern: String)(implicit val tokeni
 
   val compiled = Pattern.compile(pattern)
 
-  def checkMatch(partial:String): Boolean = {
+  def couldMatch(partial:String): Boolean = {
 
     val matcher = compiled.matcher(partial)
 
@@ -49,7 +49,7 @@ case class RegexTokenDef(name : String)(val pattern: String)(implicit val tokeni
 
   }
 
-  def isFinishedMatch(partial:String): Boolean = {
+  def matches(partial:String): Boolean = {
 
     val matcher = compiled.matcher(partial)
 

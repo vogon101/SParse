@@ -8,10 +8,31 @@ import com.vogonjeltz.sparse.lib.token.Tokenizer
   */
 class SLangTokenizer(parsingLogger: ParsingLogger) extends Tokenizer(parsingLogger){
 
-  val LBRACK  = "LBRACK" ~  "("
-  val RBRACK  = "RBRACK" ~  ")"
-  val NAME    = "NAME"   $
-    "(([a-zA-Z_\\+\\-\\*^%#~@\\?\\/!\\$\\%£<>=]+[a-zA-Z0-9_\\+\\-\\*^%#~@\\?\\/!\\$\\%£<>=]*))(\\.([a-zA-Z_\\+\\-\\*^%#~@\\?\\/!\\$\\%£<>=]+[a-zA-Z0-9_\\+\\-\\*^%#~@\\?\\/!\\$\\%£<>=]*))*"
-  //TODO: Fix situations like my.name==his.name which would be read as one identifier
+  override val PARSE_NEWLINE_AS_TOKEN = true
+
+  val L_BRACK  = "L_BRACK" ~  "("
+  val R_BRACK  = "R_BRACK" ~  ")"
+
+  val L_C_BRACK = "L_C_BRACK" ~ "{"
+  val R_C_BRACK = "R_C_BRACK" ~ "}"
+
+  val NAME = "NAME" $ "[A-Za-z_]+[A-Za-z0-9_\\-]*"
+
+  val F_ARROW = "F_ARROW" ~ "=>"
+
+  val SEMI_COLON = "SEMI_COLON" ~ ";"
+
+  val SYMB = "SYMBOL" $ "[=!£\\$%\\^\\&\\*\\-\\+\\~#@?<>]+"
+
+  val DOT = "DOT" ~ "."
+
+  val STRING = "STR" $ "\"[^\"^\n^\r]*\""
+
+  val FLOAT_LITERAL = "FLOAT" $ "([+-]?(\\d+\\.)?\\d+[fid]?)"
+
+  val INLINE_COMMENT = "INLINE_COMMENT" $ "//[^\n^\r]*"
+
+  val NL = "NEW_LINE" ~ "\n"
+
 
 }
