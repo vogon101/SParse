@@ -23,7 +23,8 @@ abstract class TokenDef extends SParseParser[Token]{
   def fromText (text: String, lineNum: Int): Token = Token(text, this, lineNum)
 
   def parse(tokenStream: TokenStream): (Option[Token], Int) = {
-    if (tokenStream.get().typ == this) (Some(tokenStream.get(0)), 1)
+    if (tokenStream.length < 1) (None, 0)
+    else if (tokenStream.get().typ == this) (Some(tokenStream.get(0)), 1)
     else (None, 0)
   }
 

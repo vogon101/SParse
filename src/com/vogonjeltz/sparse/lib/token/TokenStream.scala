@@ -17,6 +17,8 @@ class TokenStream (val originalTokens: List[Token]){
 
   def getList(endOffset: Int = 0) = workingTokens.slice(0, endOffset+1)
 
+  def length = workingTokens.length
+
   def consume(count: Int) = {
     _consumed += count
     workingTokens = workingTokens.slice(count, workingTokens.length)

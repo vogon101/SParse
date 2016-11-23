@@ -7,10 +7,8 @@ import com.vogonjeltz.sparse.lib.token.{Token, TokenStream}
   *
   * Created by fredd
   */
-abstract class SParseParser[R] {
+abstract class SParseParser[+R] {
 
   def parse(tokenStream: TokenStream): (Option[R], Int)
-
-
 
 }

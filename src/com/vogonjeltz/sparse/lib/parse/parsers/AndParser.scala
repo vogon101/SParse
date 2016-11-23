@@ -35,6 +35,6 @@ class AndParser[I1, I2](p1: SParseParser[I1], p2: SParseParser[I2]) extends SPar
 
   }
 
-  override def toString: String = s"AndParser($p1, $p2)"
+  override def toString: String = s"And( $p1, $p2 )"
 
 }

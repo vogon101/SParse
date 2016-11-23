@@ -28,13 +28,13 @@ object TestApp {
                    |//thanks
                  """.stripMargin
 
-      text = "() =>"
+      text = "freddie"
 
       println;println
 
       val parser = new TestParser(new ParsingLogger(2))
-      println(parser.functionLiteral)
-      val ret = parser.parse(parser.functionLiteral, text)
+      println(parser.program)
+      val ret = parser.parse(parser.program, text)
       println(ret)
 
 
@@ -51,6 +51,24 @@ class TestParser(val Log: ParsingLogger) extends GrammarParser {
 
   import tokenizer._
 
-  val functionLiteral = L_BRACK ~ R_BRACK ~ F_ARROW
+  val program: Parser[Program] = (line+) ^^ (X => new Program(X))
+
+  lazy val line: Parser[Line] = element
+
+  lazy val element: Parser[Element] = ident
+
+  lazy val ident: Parser[Ident] = (NAME | NAME) ^^ ((X: Token) => {new Ident(X.text)})
 
 }
+
+class Program (lines: List[Line]) {
+
+  override def toString: String = "Program( " + lines.zipWithIndex.map(X => X._1 + (if (X._2 != lines.length) "," else "")).foldLeft(_ + _) + " )"
+
+}
+
+abstract class Line
+
+abstract class Element extends Line
+
+class Ident(name: String) extends Element
