@@ -6,7 +6,7 @@ import com.vogonjeltz.sparse.lib.token.TokenStream
 /**
   * Created by Freddie on 23/11/2016.
   */
-class TransformParser[I1, R](val p1: SParseParser[I1])(val transform : (I1) => R) extends SParseParser[R]{
+class TransformParser[I1,T >: I1, +R](val p1: SParseParser[I1])(val transform : (T) => R) extends SParseParser[R]{
 
   override def parse(tokenStream: TokenStream): (Option[R], Int) = {
 
@@ -17,6 +17,6 @@ class TransformParser[I1, R](val p1: SParseParser[I1])(val transform : (I1) => R
 
   }
 
-  override def toString: String = s"Transform( $p1 )"
+  //override def toString: String = s"Transform( $p1 )"
 
 }

@@ -8,7 +8,7 @@ import scala.collection.mutable.ListBuffer
 /**
   * Created by Freddie on 23/11/2016.
   */
-class RepeatParser[I1](val p1: SParseParser[I1], val min: Int = 0) extends SParseParser[List[I1]]{
+class RepeatParser[+I1](val p1: SParseParser[I1], val min: Int = 0) extends SParseParser[List[I1]]{
 
   override def parse(tokenStream: TokenStream): (Option[List[I1]], Int) = {
 
@@ -28,6 +28,6 @@ class RepeatParser[I1](val p1: SParseParser[I1], val min: Int = 0) extends SPars
 
   }
 
-  override def toString: String = s"Repeat( $p1, $min )"
+  //override def toString: String = s"Repeat( $p1, $min )"
 
 }

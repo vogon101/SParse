@@ -51,19 +51,26 @@ class TestParser(val Log: ParsingLogger) extends GrammarParser {
 
   import tokenizer._
 
-  val program: Parser[Program] = (line+) ^^ (X => new Program(X))
+  lazy val program: Parser[Program] = (line+) ^^ (X => new Program(X))
 
   lazy val line: Parser[Line] = element
 
-  lazy val element: Parser[Element] = ident
+  lazy val element: Parser[Element] = (
+        functionDef
+      | ident
+    )
 
-  lazy val ident: Parser[Ident] = (NAME | NAME) ^^ ((X: Token) => {new Ident(X.text)})
+  val ident: Parser[Ident] = repsep(NAME, DOT) ^^ ((X: List[Token]) => {new Ident(X.map(_.text))})
+
+  val nameList: Parser[List[Ident]] = repsep(NAME, COMMA) ^^ ((X: List[Token]) => X.map(Y => new Ident(List(Y.text))))
+
+  val functionDef: Parser[FunctionDef] = ((nameList <~ F_ARROW) ~ line) ^^ (X => new FunctionDef(X._1, X._2))
 
 }
 
 class Program (lines: List[Line]) {
 
-  override def toString: String = "Program( " + lines.zipWithIndex.map(X => X._1 + (if (X._2 != lines.length) "," else "")).foldLeft(_ + _) + " )"
+  override def toString: String = "Program( " + lines.zipWithIndex.map(X => X._1).mkString("\n") + " )"
 
 }
 
@@ -71,4 +78,6 @@ abstract class Line
 
 abstract class Element extends Line
 
-class Ident(name: String) extends Element
+class Ident(layers: List[String]) extends Element
+
+class FunctionDef(names: List[Ident], code: Line) extends Element

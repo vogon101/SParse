@@ -6,7 +6,7 @@ import com.vogonjeltz.sparse.lib.token.TokenStream
 /**
   * Created by Freddie on 29/10/2016.
   */
-class OrParser[I1](p1: SParseParser[I1], p2: SParseParser[I1]) extends SParseParser[I1] {
+class OrParser[+I1](p1: SParseParser[I1], p2: SParseParser[I1]) extends SParseParser[I1] {
 
   override def parse(tokenStream: TokenStream): (Option[I1], Int) = {
 
@@ -17,6 +17,6 @@ class OrParser[I1](p1: SParseParser[I1], p2: SParseParser[I1]) extends SParsePar
 
   }
 
-  override def toString: String = s"OR ( $p1, $p2 )"
+  //override def toString: String = s"OR ( $p1, $p2 )"
 
 }

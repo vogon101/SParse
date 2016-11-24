@@ -71,8 +71,6 @@ abstract class Tokenizer (val Log: ParsingLogger = new ParsingLogger()){
       reset()
     }
 
-    //TODO: Work out how to add newlines as a token
-    //TODO: Figure out how to not include the "\n" at the end of an InlineComment token
     while (workingSource.length > 0) {
 
       val c = workingSource.head

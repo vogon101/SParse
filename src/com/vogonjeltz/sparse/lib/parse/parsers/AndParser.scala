@@ -8,7 +8,7 @@ import com.vogonjeltz.sparse.lib.token.{Token, TokenStream}
   *
   * Created by fredd
   */
-class AndParser[I1, I2](p1: SParseParser[I1], p2: SParseParser[I2]) extends SParseParser[(I1, I2)] {
+class AndParser[+I1, +I2](p1: SParseParser[I1], p2: SParseParser[I2]) extends SParseParser[(I1, I2)] {
 
   def parse(tokenStream: TokenStream): (Option[(I1, I2)], Int) = {
 
@@ -35,6 +35,6 @@ class AndParser[I1, I2](p1: SParseParser[I1], p2: SParseParser[I2]) extends SPar
 
   }
 
-  override def toString: String = s"And( $p1, $p2 )"
+  //override def toString: String = s"And( $p1, $p2 )"
 
 }

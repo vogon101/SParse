@@ -10,7 +10,7 @@ class SLangTokenizer(parsingLogger: ParsingLogger) extends Tokenizer(parsingLogg
 
   override val PARSE_NEWLINE_AS_TOKEN = true
 
-  val L_BRACK  = "L_BRACK" ~  "("
+  val L_BRACK  = "L_BRACK" ~ "("
   val R_BRACK  = "R_BRACK" ~  ")"
 
   val L_C_BRACK = "L_C_BRACK" ~ "{"
@@ -20,13 +20,15 @@ class SLangTokenizer(parsingLogger: ParsingLogger) extends Tokenizer(parsingLogg
 
   val F_ARROW = "F_ARROW" ~ "=>"
 
+  val COMMA = "COMMA" ~ ","
+
   val SEMI_COLON = "SEMI_COLON" ~ ";"
 
   val SYMB = "SYMBOL" $ "[=!£\\$%\\^\\&\\*\\-\\+\\~#@?<>]+"
 
   val DOT = "DOT" ~ "."
 
-  val STRING = "STR" $ "\"[^\"^\n^\r]*\""
+  val STRING = "STR" $ "\""+"""([^"\x00-\x1F\x7F\\]|\\[\\'"bfnrt]|\\u[a-fA-F0-9]{4})*"""+"\""
 
   val FLOAT_LITERAL = "FLOAT" $ "([+-]?(\\d+\\.)?\\d+[fid]?)"
 
